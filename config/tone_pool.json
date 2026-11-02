@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "description": "TTS 音色候选池。confirmed 为参数完整可直接用的音色；reference 为剪映本地音色表(缺 resource_id，需剪映云端补齐后才能用)。默认从 confirmed 随机挑选。",
+  "confirmed": [
+    {
+      "tone_type": "直播间小哥",
+      "tone_speaker": "moqingxuan_meet_24k",
+      "resource_id": "7455280911190331954",
+      "tone_platform": "moyin",
+      "gender": "male",
+      "style": ["没想到"],
+      "note": "南京模板音色，男声直播感"
+    },
+    {
+      "tone_type": "激昂解说",
+      "tone_speaker": "saturn_zh_male_zhoumai",
+      "resource_id": "7573979581384854811",
+      "tone_platform": "sami",
+      "gender": "male",
+      "style": ["三连否"],
+      "note": "嘉兴三连否模板音色，男声激昂"
+    },
+    {
+      "tone_type": "大促广告",
+      "tone_speaker": "saturn_zh_female_daogouluxixi",
+      "resource_id": "7585403114308537610",
+      "tone_platform": "sami",
+      "gender": "female",
+      "style": ["招商"],
+      "note": "嘉兴招商模板音色，女声促销感"
+    }
+  ],
+  "reference": [
+    {"tone_cn_name": "甜美解说", "tone_speaker": "BV405_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "心灵鸡汤", "tone_speaker": "BV403_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "娱乐扒妹", "tone_speaker": "BV005_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "春日甜妹", "tone_speaker": "VOV204_bytesing3_songbie", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "甜美女孩", "tone_speaker": "VOV201_bytesing3_aidelizan", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "激扬男声", "tone_speaker": "VOV202_bytesing3_huanlesong", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "亲切女声", "tone_speaker": "BV007_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "知性女声", "tone_speaker": "BV009_DPE_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "新闻女声", "tone_speaker": "BV011_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "温柔淑女", "tone_speaker": "BV104_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "小姐姐", "tone_speaker": "BV001_fast_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "知识讲解", "tone_speaker": "BV102_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "新闻男声", "tone_speaker": "BV002_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "阳光男生", "tone_speaker": "BV056_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "雅痞大叔", "tone_speaker": "BV107_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "说唱小哥", "tone_speaker": "BR001_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "广西表哥", "tone_speaker": "BV213_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "粤语男声", "tone_speaker": "BV026_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "天津小哥", "tone_speaker": "BV212_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "河南大叔", "tone_speaker": "BV214_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "西安掌柜", "tone_speaker": "BV210_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "东北老铁", "tone_speaker": "BV021_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "重庆小伙", "tone_speaker": "BV019_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "台湾女生", "tone_speaker": "BV025_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "动漫小新", "tone_speaker": "BV050_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "动漫海绵", "tone_speaker": "BV063_streaming", "gender": "male", "resource_id": ""},
+    {"tone_cn_name": "小萝莉", "tone_speaker": "BV064_streaming", "gender": "female", "resource_id": ""},
+    {"tone_cn_name": "萌娃", "tone_speaker": "BV051_streaming", "gender": "child", "resource_id": ""}
+  ]
+}

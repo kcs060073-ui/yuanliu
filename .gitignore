@@ -1,0 +1,12 @@
+# 运行时产物（本机数据，不入库）
+output/
+state/
+__pycache__/
+*.py[cod]
+tests/_tmp/
+gui_settings.json
+media_size_cache.json
+media_orientation_cache.json
+*.lock
+*.bak
+.DS_Store

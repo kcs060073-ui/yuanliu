@@ -1,0 +1,259 @@
+{
+  "parks": {
+    "北京园区": {
+      "display": "北京",
+      "aliases": [
+        "北京",
+        "医械城"
+      ],
+      "priority": 1,
+      "nearby": [
+        "德州园区"
+      ]
+    },
+    "嘉兴园区": {
+      "display": "嘉兴",
+      "aliases": [
+        "嘉兴"
+      ],
+      "priority": 1,
+      "nearby": [
+        "新仓园区",
+        "嘉定园区",
+        "苏州园区"
+      ]
+    },
+    "新疆园区": {
+      "display": "两河园区",
+      "aliases": [
+        "乌鲁木齐",
+        "新疆",
+        "两河园区",
+        "两河"
+      ],
+      "priority": 1,
+      "nearby": []
+    },
+    "苏州园区": {
+      "display": "苏州",
+      "aliases": [
+        "苏州"
+      ],
+      "priority": 1,
+      "nearby": [
+        "嘉定园区",
+        "嘉兴园区",
+        "新仓园区",
+        "南京园区"
+      ]
+    },
+    "贵阳园区": {
+      "display": "贵阳",
+      "aliases": [
+        "贵阳",
+        "贵州"
+      ],
+      "priority": 1,
+      "nearby": []
+    },
+    "南京园区": {
+      "display": "南京",
+      "aliases": [
+        "南京",
+        "南京园区"
+      ],
+      "priority": 1,
+      "nearby": [
+        "苏州园区",
+        "嘉定园区",
+        "德州园区"
+      ]
+    },
+    "嘉定园区": {
+      "display": "嘉定",
+      "aliases": [
+        "嘉定",
+        "上海嘉定",
+        "嘉定园区"
+      ],
+      "priority": 1,
+      "nearby": [
+        "苏州园区",
+        "嘉兴园区",
+        "新仓园区"
+      ]
+    },
+    "德州园区": {
+      "display": "德州",
+      "aliases": [
+        "德州",
+        "山东德州",
+        "德州园区"
+      ],
+      "priority": 1,
+      "nearby": [
+        "北京园区",
+        "南京园区"
+      ]
+    },
+    "新仓园区": {
+      "display": "新仓",
+      "aliases": [
+        "新仓园区",
+        "平湖新仓",
+        "新仓出口"
+      ],
+      "priority": 1,
+      "nearby": [
+        "嘉兴园区",
+        "嘉定园区",
+        "苏州园区"
+      ]
+    }
+  },
+  "buckets": {
+    "entrance": {
+      "cross": false,
+      "exclude": [],
+      "fallback": "复用相邻段落画面（不跨园区借用）",
+      "keywords": [
+        "园区门口",
+        "大门",
+        "入口",
+        "门头",
+        "进园区",
+        "门口"
+      ]
+    },
+    "aerial": {
+      "cross": false,
+      "exclude": [],
+      "fallback": "复用相邻段落画面（不跨园区借用）",
+      "keywords": [
+        "全景",
+        "俯拍",
+        "航拍",
+        "鸟瞰"
+      ]
+    },
+    "railway": {
+      "cross": false,
+      "exclude": [],
+      "fallback": "复用相邻段落画面（不跨园区借用）",
+      "keywords": [
+        "高铁站",
+        "高铁",
+        "火车站",
+        "动车站",
+        "进站",
+        "出站"
+      ]
+    },
+    "metro": {
+      "cross": false,
+      "exclude": [],
+      "fallback": "复用相邻段落画面（不跨园区借用）",
+      "keywords": [
+        "地铁",
+        "地铁站",
+        "地铁口",
+        "轻轨"
+      ]
+    },
+    "traffic": {
+      "cross": false,
+      "exclude": [],
+      "fallback": "复用相邻段落画面（不跨园区借用）",
+      "keywords": [
+        "交通",
+        "路口",
+        "主干道",
+        "道路",
+        "高速",
+        "高速口",
+        "高架",
+        "收费站",
+        "匝道",
+        "公路"
+      ]
+    },
+    "inside": {
+      "cross": true,
+      "exclude": [],
+      "fallback": "借用其他园区厂房内部",
+      "keywords": [
+        "厂房内部",
+        "车间",
+        "生产线",
+        "内部",
+        "一楼",
+        "层高",
+        "户型",
+        "分割",
+        "航车",
+        "行车",
+        "仓库"
+      ]
+    },
+    "factory": {
+      "cross": false,
+      "exclude": [],
+      "fallback": "复用相邻段落画面（不跨园区借用）",
+      "keywords": [
+        "厂房",
+        "厂区",
+        "标准厂房"
+      ]
+    },
+    "dormitory": {
+      "cross": true,
+      "exclude": [
+        "新疆园区"
+      ],
+      "fallback": "借用其他园区宿舍（不含新疆）",
+      "keywords": [
+        "宿舍",
+        "住宿",
+        "公寓"
+      ]
+    },
+    "canteen": {
+      "cross": true,
+      "exclude": [],
+      "fallback": "借用邻近园区的同桶素材",
+      "keywords": [
+        "食堂",
+        "餐厅",
+        "餐饮"
+      ]
+    },
+    "office": {
+      "cross": true,
+      "exclude": [],
+      "fallback": "借用邻近园区的同桶素材",
+      "keywords": [
+        "办公",
+        "办公楼",
+        "写字楼",
+        "配套楼"
+      ]
+    },
+    "environment": {
+      "cross": true,
+      "exclude": [],
+      "fallback": "借用邻近园区的同桶素材",
+      "keywords": [
+        "配套",
+        "环境",
+        "绿化",
+        "广场",
+        "街道",
+        "园区",
+        "停车场",
+        "停车"
+      ]
+    }
+  },
+  "version": 17,
+  "updated": "2026-09-15 09:20:20"
+}

@@ -1,0 +1,27 @@
+{
+  "version": 360000,
+  "new_version": "181.0.0",
+  "color_space": 0,
+  "config": {
+    "video_mute": true,
+    "subtitle_sync": false,
+    "zoom_info_params": {
+      "zoom_ratio": 0.7
+    }
+  },
+  "platform": {
+    "os": "windows",
+    "os_version": "10.0.19045",
+    "app_id": 3704,
+    "app_version": "11.2.0",
+    "app_source": "lv"
+  },
+  "last_modified_platform": {
+    "os": "windows",
+    "os_version": "10.0.19045",
+    "app_id": 3704,
+    "app_version": "11.2.0",
+    "app_source": "lv"
+  },
+  "render_index_track_mode_on": true
+}

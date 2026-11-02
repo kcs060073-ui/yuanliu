@@ -1,0 +1,456 @@
+{
+  "schema_version": 1,
+  "release_version": "261102-P06",
+  "min_upgrade_from": "260916-P02",
+  "data_schema_version": 1,
+  "created_at": "2026-11-02 17:21:32",
+  "protected_paths": [
+    "output/",
+    "state/",
+    "config/gui_settings.json",
+    "config/materials_baseline.json"
+  ],
+  "files": [
+    {
+      "path": "PROJECT_STATUS.md",
+      "size": 39192,
+      "sha256": "276c5480d974be78c7c344b80d013ed495af5747868e4030c4632e591e32063e",
+      "policy": "official"
+    },
+    {
+      "path": "SKILL.md",
+      "size": 69885,
+      "sha256": "0b4aa1f72847d4bc9bd94fe979968dbc7366b667a988978f6f58ddfc8c21375b",
+      "policy": "official"
+    },
+    {
+      "path": "config/default_styles.json",
+      "size": 5657,
+      "sha256": "48281220f709872389c61c3678a937f1975cf77fb504245a6f8f1d68a510ae11",
+      "policy": "official"
+    },
+    {
+      "path": "config/park_rules.json",
+      "size": 5339,
+      "sha256": "aa99c5bc3ea73211108a78009f05d0b29b4fef7d7100ba0ce571adf8d66b699f",
+      "policy": "official"
+    },
+    {
+      "path": "config/semantics.json",
+      "size": 7489,
+      "sha256": "fe2047043021a1a7897e5159df6e26cd5b2159cf96477eca9b1cc4699ab4f193",
+      "policy": "official"
+    },
+    {
+      "path": "config/tone_pool.json",
+      "size": 4265,
+      "sha256": "fa7116960a5ea651bdd9d16a6da8776b1762f801040683eb147456e48e3bd88d",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/arrange_park_video.py",
+      "size": 22674,
+      "sha256": "2fa80ef2e10fa668424bf6e499c6e1d1e470243da94b71bc2dc748db181d087f",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/atomic_io.py",
+      "size": 4657,
+      "sha256": "55609f11950fc367874d181968283f115dea785a80efb89ef7e710a89575a776",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/bgm_pool.py",
+      "size": 23726,
+      "sha256": "46b8e50259a3c594ee8173a7539cb8fd4cb42dc8872e3a033376e9cd29507dd1",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/build_rules_xlsx.py",
+      "size": 30278,
+      "sha256": "eb0406761743774cc6e0fd133abc4c08ae6e6d48f971ec457913021daba0b0f9",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/doctor.py",
+      "size": 16115,
+      "sha256": "807377637cc576e11ed18219e2fb69983d9af56236011a5cfce490d0d49c3e8f",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/draft_builder.py",
+      "size": 65796,
+      "sha256": "4e00db54e0c84aba000190c1ceaae2055165a2bbbc3ef99a8c0b00ed98ac9ec1",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/draft_naming.py",
+      "size": 15573,
+      "sha256": "c932ac02db997e34274681f9e14c57fdbef4dea8e6fc875807e90edec740c45b",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/import_rules.py",
+      "size": 9666,
+      "sha256": "cd05051e1419af24a109e98df20941cc618ecb775e118b5bf30c70c9bb21140b",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/jianying_path.py",
+      "size": 7233,
+      "sha256": "cf8a7a2cb7b25910c435df21b28599f1cd98a97eb024c206138a9618698c6524",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/job_receipt.py",
+      "size": 2887,
+      "sha256": "e15dfb43ae02a72163afa36f2222658fd5b90a563120e2095eed5cc8ab1edab1",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/jy_crypto.py",
+      "size": 10816,
+      "sha256": "8a2df369758da0c6e9742a270e50903928c939547a169608c7c30b1363157d54",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/make_park_video.py",
+      "size": 41798,
+      "sha256": "abc083999790435ab980dfa7216184d151e3ddbbf893c391576548c18e3cf734",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/material_governance.py",
+      "size": 14447,
+      "sha256": "a47d95f131b824e2dc2e18e735be481fb62037c5e34577a8ed51e22fbed5b58c",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/material_manifest.py",
+      "size": 8517,
+      "sha256": "1b32562144d28c760150904062b4d15b0c19ef9a5b4b36726ef972d82d4d6a4a",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/material_matcher.py",
+      "size": 56842,
+      "sha256": "2a476e1fbb94ffb6865e03fb511e2594b494d453202f05fbedf4ba1c55b74b91",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/pack_release.py",
+      "size": 18155,
+      "sha256": "5176b1bcf988266cb0d95c90eb2b79068a57e03051a262791e59ded97198f3a2",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/park_audit.py",
+      "size": 6957,
+      "sha256": "18e550c4780c282457b8244e37ca7552de08828f0366832d651b63298d5a5f81",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/park_rules.py",
+      "size": 10515,
+      "sha256": "e82177e3bef26d3d59b8566186dd74b8c230c408e498a7a6182a4ba48ea3105e",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/platform_paths.py",
+      "size": 7071,
+      "sha256": "c753f035ae05d649a4de97546ff95056ab5fb033f5e797b48fc94909d055e81b",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/production_log.py",
+      "size": 10692,
+      "sha256": "a5a6bfe44fb554d5268701681d7b1ab7d5ccdd845440891f0b56a68803194f99",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/release_manifest.py",
+      "size": 4921,
+      "sha256": "d20d3b7619e93972f29e25b77c33f477450dbbc4efd381224078ac890627832d",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/replace_seg.py",
+      "size": 9940,
+      "sha256": "701fc3a93cf2d946f1d1c6327871b8770bfb7b41c62a6f8b241b5bdef66db31b",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/runtime_context.py",
+      "size": 4761,
+      "sha256": "0b4eb801603f396f7674e118e5cc9b39a46cd845be8ea1ee2b553f5ff20f0a51",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/script_split.py",
+      "size": 3368,
+      "sha256": "af093d42031b67f6ce4e6bab3316738edbd48994768444faa32852b77f59e514",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/semantics_config.py",
+      "size": 13095,
+      "sha256": "2f09fe5b2f41c53bee10616e07837add9b4a004272d3ac4b3f4a18cd74a7bed6",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/storyboard.py",
+      "size": 11113,
+      "sha256": "f9c1d041976ad91b51c4d0a0c5915488c1f38b048a7205f0199e6fb71c2e5987",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/subtitle_split.py",
+      "size": 11846,
+      "sha256": "848d1ff6df40bb57f32f55e516e53cc3a44d45bf036d855ee2a89f78a33925a9",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/upgrade.py",
+      "size": 17437,
+      "sha256": "77b2a8b0446f5de5f3e2387f83189c7f6c567d27e252c7838fd545c03703efa6",
+      "policy": "official"
+    },
+    {
+      "path": "templates/style1_jiaxing.json",
+      "size": 542,
+      "sha256": "634d317b84029b48a0e357d06dc5ffc98f1917d002e4e3bacdc026a93c093507",
+      "policy": "official"
+    },
+    {
+      "path": "templates/style2_jiaxing_zs.json",
+      "size": 936,
+      "sha256": "3b8cf72c8de10754a0b2e8a602c07ae9e69e820d2d2622ff4cfe5b4ec354f9f6",
+      "policy": "official"
+    },
+    {
+      "path": "templates/style3_nanjing.json",
+      "size": 908,
+      "sha256": "31cf54f06f2849669bd76c9433f0799ef1106b28310ab88763856f3bdf226074",
+      "policy": "official"
+    },
+    {
+      "path": "tests/run_arrange_e2e.py",
+      "size": 10880,
+      "sha256": "7db2b4f7eea64ef5a68f007a2ee48fef60b6db6bd25465a4428a9f11c58a9e5b",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_bgm_lookup.py",
+      "size": 11870,
+      "sha256": "d71a16aba2b865f108df259b81a2d10c038910b590348a24b3a0e3e876be5bf0",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_cross_machine.py",
+      "size": 13900,
+      "sha256": "9875505d8a7898f4f4da8c032f1b6d8019ef86e43339e01b645db08be29faa75",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_cutting_policy.py",
+      "size": 970,
+      "sha256": "dfe87e4b1f46b2922d217551bb6b195fdf28ca9655bee9ceac6d94d7cc217685",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_draft_collision.py",
+      "size": 11725,
+      "sha256": "534c3b35b8199db48ad5e189f77534e262db403c1dc7e949a3c88d5f9ec56a68",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_explicit_overwrite.py",
+      "size": 18538,
+      "sha256": "33c3ac274bf153aa7f631978ccf414b88e72233a0ac84298b906a547d3bb4516",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_gui_thread_safety.py",
+      "size": 9748,
+      "sha256": "680ab0cba56718a273a4d5c5a08ef4a4f9cc277db71af889c15056b98594b44f",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_image_constraint.py",
+      "size": 5979,
+      "sha256": "e5f42d77b6c02a5fd18d0e0b23694670eee1bdeef0f8c6579b4dc9a59c25cfe8",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_install_dir_detect.py",
+      "size": 6227,
+      "sha256": "65077c32135e7c9ec22d95ecc3c0ca17b6a6c32cfd7f329ab6634dab7eb0fa0d",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_make_copy.py",
+      "size": 8337,
+      "sha256": "6024e28657ef9194176e18f1a2521173337aea51184a1a20ef22ab9ff7046996",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_manifest_packaging.py",
+      "size": 7184,
+      "sha256": "650b995ca678437d08d7ca7ca943f584f95eb8ab39490bad0646a5aed459023f",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_material_manifest.py",
+      "size": 1263,
+      "sha256": "06fdd2b31bf99eeaaf8518c2f8938ef93321f86f0c5cbf70c18ad3c23a6cbb86",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_materials_guard.py",
+      "size": 7854,
+      "sha256": "a63bd4afdded6a906d88ea42382d3953a3642446ffb7d8413ba3055a01067649",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_media_orientation.py",
+      "size": 3860,
+      "sha256": "b8b9beb493f401b43022b3e11e168725f62bf1dac785770297ff550991ba364d",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_orient_fallback.py",
+      "size": 3854,
+      "sha256": "e65f0d97f36de39b45e7d073fe90ded1c649b9c617b1d20ca0656d8073fb0138",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_park_locking.py",
+      "size": 4489,
+      "sha256": "d7e6f03fcad74f2730cba31ae08e0d5b944ad570e9862ad3fddc51bb2be9ce37",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_platform_paths.py",
+      "size": 4808,
+      "sha256": "aad62f0d6189a4f19508b9c915e3f045f273b939a4e1bb9f6673988b77dab3fa",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_release_wording.py",
+      "size": 7899,
+      "sha256": "4c7952ccc52f98c65813bc67b0625a8a29a2899e0b9b3360439088ad6b0c7c44",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_residence_priority.py",
+      "size": 6175,
+      "sha256": "c966c502e6846f28fd85399cb5e60a3f03a3dd03d68d0f5c50c2a820a69d1fcc",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_script_split.py",
+      "size": 4448,
+      "sha256": "a57dc652f9859ff163323715f344d8f5a72da4870fc6d918cf13740c6b05c30a",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_semantic_blocks.py",
+      "size": 16512,
+      "sha256": "ba8be2c83cf89873d1208acd1eeccd016d1f826659950cf08ca8995c9dd63283",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_storyboard_plan.py",
+      "size": 1397,
+      "sha256": "be165851ca2c3080aa16b86af7d6e757b2dbb8b1e8c3b33005d97e363d12e691",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_team_runtime.py",
+      "size": 6933,
+      "sha256": "f5d47efc5de1af8edea8a25c277b5c52ab0944d39802bf1e89f7c2f7c06a9384",
+      "policy": "official"
+    },
+    {
+      "path": "tests/test_template_privacy.py",
+      "size": 9322,
+      "sha256": "ea3b16427e3605644d8de6b7646f54cfd13ec136c60af0e9ef9637fdbb3d9207",
+      "policy": "official"
+    },
+    {
+      "path": "tests/verify_draft.py",
+      "size": 15738,
+      "sha256": "c254df9b76ba556ce89de18d01cec9a00fa559560bcda33b068e602a02533637",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/install.bat",
+      "size": 1945,
+      "sha256": "97f706dedad9cf4ba9ef2ee99558bb0af1d1ebb5411fb80284727c47fee30062",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/install.py",
+      "size": 11451,
+      "sha256": "88bafc87f2130266e09d3aafddb57bee3f104e7a0f2b762c038a91827b470e1c",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/shortcut-help.txt",
+      "size": 767,
+      "sha256": "79625655c156ad323d72c134132fb531d69b259101bdf035c02ccf7c4a433d47",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/storyboard_gui.py",
+      "size": 9536,
+      "sha256": "c2294c3fda0bf3a2d12c17fd2fd245a1589c85d6bc5c81cbb7cc710cfd7fb387",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/task_center.py",
+      "size": 3597,
+      "sha256": "fae9d1cddf62116b4658b133bd662036db0c103ce73d8d6bda93c034553dec88",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/workbench_gui.py",
+      "size": 79327,
+      "sha256": "ef4d99763d454c2c8bb4c27d2f06bb2ebb8b094905e061e746f81a1643ce1bcf",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/创建桌面快捷方式.bat",
+      "size": 845,
+      "sha256": "04d233d00a8ef9316699c1084d7f1726412143ca8563d58b9e268592473d0705",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/启动工作台.bat",
+      "size": 2310,
+      "sha256": "003256b30d93a31b96cb95d9eb6b2d0764ffd2fd6cab84aa9df39aba5de53e88",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/源流.ico",
+      "size": 104294,
+      "sha256": "8739a34540399c01d5f01173534f43dcfd432c0677289610c057b545f7250de2",
+      "policy": "official"
+    },
+    {
+      "path": "workbench/源流.jpg",
+      "size": 996547,
+      "sha256": "a16b30d0a884e1bd49b50d1014bac3028fe30358e2f7899bc6bfd7ce18220550",
+      "policy": "official"
+    },
+    {
+      "path": "语义规则分配表.xlsx",
+      "size": 18555,
+      "sha256": "2db0ba6f0543a6ddb40449aa7a7a0972e5603683eb3d064828452d2f6d24163a",
+      "policy": "official"
+    }
+  ],
+  "tests": [
+    "tests/test_*.py"
+  ]
+}

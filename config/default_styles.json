@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "canvas_default": {"ratio": "9:16", "width": 1080, "height": 1920},
+  "disclaimer": "注：以上均为建筑面积",
+  "common": {
+    "tts_auto_update": true,
+    "subtitle_ratio": "9:16",
+    "video_fill_scale_hint": 3.1,
+    "speed_default": 1.09,
+    "draft_new_version": "164.0.0"
+  },
+  "styles": {
+    "1": {
+      "name": "三连否",
+      "aliases": ["三连否", "排比", "修辞", "style1", "1"],
+      "description": "开场三连否排比钩子，节奏激进，默认语速统一1.09",
+      "canvas": {"ratio": "9:16", "width": 1920, "height": 3414},
+      "tracks": [
+        {"type": "video", "role": "main_video"},
+        {"type": "text", "role": "subtitle"},
+        {"type": "text", "role": "hook"},
+        {"type": "effect", "role": "intro_effect"},
+        {"type": "text", "role": "title"},
+        {"type": "text", "role": "disclaimer"},
+        {"type": "text", "role": "brand"},
+        {"type": "sticker", "role": "decor"},
+        {"type": "audio", "role": "tts"},
+        {"type": "audio", "role": "bgm"},
+        {"type": "audio", "role": "sfx"}
+      ],
+      "tts": {
+        "tone_type": "激昂解说",
+        "tone_speaker": "saturn_zh_male_zhoumai",
+        "resource_id": "7573979581384854811",
+        "tone_effect_name": "激昂解说",
+        "tone_platform": "sami",
+        "tone_emotion_name_key": "voice_style_default",
+        "gender": "male",
+        "hook_speed": 1.09,
+        "normal_speed": 1.09
+      },
+      "bgm": {
+        "name": "大气震撼 史诗宣传 励志",
+        "resource_id": "7377838878989813787",
+        "category": "推荐音乐"
+      },
+      "texts": {
+        "hook": {"text": "租金3毛的设备制造厂房你了解过吗？", "font_size": 8.0},
+        "title": {"text": "日租金3毛起 享超长免租期", "font_size": 13.0},
+        "brand": {"text": "浙江嘉兴工业园区\n厂房出租", "font_size": 16.0},
+        "disclaimer": {"text": "注：以上面积均为建筑面积", "font_size": 7.0}
+      },
+      "subtitle": {
+        "count_hint": 17,
+        "min_duration_ms": 900,
+        "max_duration_ms": 3800,
+        "hook_first": "排比",
+        "cta": "点击链接 填写信息 预约实地考察",
+        "speed_rule": "默认统一1.09"
+      }
+    },
+    "2": {
+      "name": "招商",
+      "aliases": ["招商", "介绍", "直接", "style2", "2"],
+      "description": "无钩子直接'火热招商中'开场，节奏紧凑，语速统一1.09，女声促销感",
+      "canvas": {"ratio": "9:16", "width": 1920, "height": 3414},
+      "tracks": [
+        {"type": "video", "role": "main_video"},
+        {"type": "text", "role": "subtitle"},
+        {"type": "text", "role": "subtitle_highlight"},
+        {"type": "audio", "role": "tts"},
+        {"type": "audio", "role": "bgm"},
+        {"type": "audio", "role": "sfx"},
+        {"type": "sticker", "role": "decor"},
+        {"type": "text", "role": "keyword"},
+        {"type": "text", "role": "keyword"},
+        {"type": "text", "role": "keyword"},
+        {"type": "text", "role": "disclaimer"}
+      ],
+      "tts": {
+        "tone_type": "大促广告",
+        "tone_speaker": "saturn_zh_female_daogouluxixi",
+        "resource_id": "7585403114308537610",
+        "tone_effect_name": "大促广告",
+        "tone_platform": "sami",
+        "tone_emotion_name_key": "voice_style_default",
+        "gender": "female",
+        "normal_speed": 1.09
+      },
+      "bgm": {
+        "name": "Why not have everything",
+        "resource_id": "7377940901888133183",
+        "category": "推荐音乐"
+      },
+      "texts": {
+        "disclaimer": {"text": "注：以上均为建筑面积", "font_size": 5.0}
+      },
+      "subtitle": {
+        "count_hint": 13,
+        "min_duration_ms": 900,
+        "max_duration_ms": 3900,
+        "hook_first": "直接开场",
+        "cta": "点击链接 填写信息 预约实地考察",
+        "speed_rule": "统一1.09"
+      }
+    },
+    "3": {
+      "name": "没想到",
+      "aliases": ["没想到", "惊讶", "钩子", "style3", "3"],
+      "description": "'真没想到！'/'南京还有租金！'惊讶钩子开场，语速统一1.09，男声直播间小哥",
+      "canvas": {"ratio": "9:16", "width": 1280, "height": 2276},
+      "tracks": [
+        {"type": "video", "role": "main_video"},
+        {"type": "text", "role": "subtitle"},
+        {"type": "text", "role": "subtitle_highlight"},
+        {"type": "audio", "role": "tts"},
+        {"type": "audio", "role": "bgm"},
+        {"type": "audio", "role": "sfx"},
+        {"type": "sticker", "role": "decor"},
+        {"type": "text", "role": "keyword"},
+        {"type": "text", "role": "keyword"},
+        {"type": "text", "role": "keyword"},
+        {"type": "text", "role": "disclaimer"}
+      ],
+      "tts": {
+        "tone_type": "直播间小哥",
+        "tone_speaker": "moqingxuan_meet_24k",
+        "resource_id": "7455280911190331954",
+        "tone_effect_name": "直播间小哥",
+        "tone_platform": "moyin",
+        "tone_emotion_name_key": "voice_style_default",
+        "gender": "male",
+        "normal_speed": 1.09
+      },
+      "bgm": {
+        "name": "新闻传播序曲",
+        "resource_id": "7455260844136406136",
+        "category": "推荐音乐"
+      },
+      "texts": {
+        "disclaimer": {"text": "注：以上均为建筑面积", "font_size": 5.0}
+      },
+      "subtitle": {
+        "count_hint": 17,
+        "min_duration_ms": 900,
+        "max_duration_ms": 3700,
+        "hook_first": "惊讶钩子",
+        "cta": "点击链接 预约实地考察",
+        "speed_rule": "统一1.09"
+      }
+    }
+  }
+}
