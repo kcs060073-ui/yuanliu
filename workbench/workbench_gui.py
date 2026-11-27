@@ -1260,6 +1260,13 @@ class Workbench(tk.Tk):
                         self.log_q.put(('bstat', (job['no'], 'PASS')))
                         results.append((job['no'], 'PASS ' + os.path.basename(real_dir)))
                         continue
+                    if rc2 == 3:
+                        # 3 = 没能校验（剪映解密 API 不可用），草稿本身是好的
+                        self._log('warn', '  #%d 自检跳过：剪映解密 API 不可用，'
+                                           '草稿未核对（不是失败）' % job['no'])
+                        self.log_q.put(('bstat', (job['no'], '未校验')))
+                        results.append((job['no'], 'SKIP ' + os.path.basename(real_dir)))
+                        continue
                     self._log('err', '  #%d 自检未通过（rc=%s）' % (job['no'], rc2))
                     self.log_q.put(('bstat', (job['no'], 'FAIL')))
                     results.append((job['no'], 'FAIL（自检 rc=%s）' % rc2))
@@ -1268,17 +1275,22 @@ class Workbench(tk.Tk):
                 self.log_q.put(('bstat', (job['no'], 'FAIL')))
                 results.append((job['no'], 'FAIL（rc=%s）' % rc))
             _ok = sum(1 for _, s in results if s.startswith('PASS'))
+            _skip = sum(1 for _, s in results if s.startswith('SKIP'))
             _sec = time.monotonic() - getattr(self, '_batch_t0', time.monotonic())
-            self._banner(_ok == n, '批量出片完成   %d/%d 通过   总耗时 %s'
-                         % (_ok, n, self._fmt_elapsed(_sec)), [
+            _head = '批量出片完成   %d/%d 通过' % (_ok, n)
+            if _skip:
+                _head += ' · %d 条未校验' % _skip
+            self._banner(_ok + _skip == n, _head + '   总耗时 %s'
+                         % self._fmt_elapsed(_sec), [
                              '素材库：%s' % (ctx.get('materials') or '(未指定)'),
                              '逐条状态见上方日志',
-                         ])
+                         ] + (['未校验＝剪映解密 API 不可用，草稿已写入，请目视确认']
+                              if _skip else []))
             if ctx.get('notify'):
                 self._post_dialog('info', '批量出片完成',
-                                  '完成 %d/%d 条\n总耗时：%s'
-                                  % (_ok, n, self._fmt_elapsed(_sec)))
-            self._log('ok', '批量完成：%d 成功 / %d 条' % (_ok, n))
+                                  '完成 %d/%d 条（未校验 %d 条）\n总耗时：%s'
+                                  % (_ok, n, _skip, self._fmt_elapsed(_sec)))
+            self._log('ok', '批量完成：%d 通过 / %d 未校验 / 共 %d 条' % (_ok, _skip, n))
             for no, s in results:
                 self._log('dim', '  #%d  %s' % (no, s))
         except Exception as e:
@@ -1332,15 +1344,30 @@ class Workbench(tk.Tk):
                     self._log('dim', '  真实草稿目录：%s' % real_dir)
                     t1 = time.monotonic()
                     rc2 = self._run_cmd([_python(), VERIFY_PY, real_dir])
-                    verify_txt = 'PASS（%s）' % self._fmt_elapsed(time.monotonic() - t1) \
-                        if rc2 == 0 else '未通过（rc=%s）' % rc2
-                    ok = rc2 == 0
-                    if rc2 != 0:
+                    elapsed = self._fmt_elapsed(time.monotonic() - t1)
+                    if rc2 == 0:
+                        verify_txt = 'PASS（%s）' % elapsed
+                        ok = True
+                    elif rc2 == 3:
+                        # 3 = 没能校验（剪映解密 API 不可用），草稿本身是好的
+                        verify_txt = '未校验（剪映解密 API 不可用，草稿已写入）'
+                        ok = True
+                        self._log('warn', '%s —— 不是草稿问题，打开剪映目视确认即可' % verify_txt)
+                    else:
+                        verify_txt = '未通过（rc=%s）' % rc2
+                        ok = False
                         self._log('err', '自检未通过（rc=%s），请看上方日志' % rc2)
             else:
                 self._log('err', '生成失败（rc=%s），请看上方日志' % rc)
             total = time.monotonic() - t0
-            title = '草稿生成完成' if ok else ('生成失败' if rc != 0 else '草稿已生成，但自检未通过')
+            if rc != 0:
+                title = '生成失败'
+                ok = False
+            elif ok:
+                title = ('草稿已生成 · 未校验'
+                         if verify_txt.startswith('未校验') else '草稿生成完成（自检通过）')
+            else:
+                title = '草稿已生成，但自检未通过'
             self._banner(ok, '%s   总耗时 %s' % (title, self._fmt_elapsed(total)), [
                 '草稿目录：%s' % (real_dir or '（未拿到）'),
                 '生成阶段：%s' % self._fmt_elapsed(gen_sec),

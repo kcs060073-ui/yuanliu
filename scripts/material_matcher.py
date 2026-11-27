@@ -399,7 +399,7 @@ def parse_semantic_points(subtitles):
 #   5. 过短字幕（≤5 字）并入前一块（"可整租""可分租"不构成独立语义）
 #
 # 块类型 → 素材 bucket 候选（按优先级，第一个没有往下退）：
-#   opening   开场（钩子 / 报园区名 / 设问+回答）  entrance → aerial → factory
+#   opening   开场（钩子 / 报园区名 / 设问+回答）  aerial → entrance → factory
 #   exterior  全新/高标准/国资/多栋/万方/环评/污水处理      factory
 #   interior  户型/起租面积/层高/承重/航车行车/水电供暖/消防  inside
 #   location  地理位置（长江/合肥/地铁/港口/高速/高铁/铁路）  highway→railway→metro→traffic
@@ -412,7 +412,7 @@ def parse_semantic_points(subtitles):
 #   cta > policy > price > location > support > interior > exterior
 # 块类型 → 素材桶候选（按优先级，第一个没素材就往下退）。
 # 内容见 config/semantics.json 的 block_buckets，注释版含义：
-#   opening 开场（钩子/报园区名/设问+回答）entrance→aerial→factory
+#   opening 开场（钩子/报园区名/设问+回答）aerial→entrance→factory（航拍优先，2026-11-27 用户拍板）
 #   exterior 全新/高标/国资/多栋/万方/环评  factory
 #   interior_area 户型/面积/起租 · interior_struct 层高/承重/行车
 #   interior_fac 水电/供暖/消防 · location 交通 · support 宿舍→食堂→办公→配套
@@ -763,6 +763,126 @@ def parse_semantic_classes(subtitles):
     return [(x or ('exterior', 'factory')) for x in out]
 
 
+# ---------------------------------------------------------------------------
+# 选片打分（2026-11-27）
+#
+# 背景：以前每个语义块只认「块类型 → 第一个非空桶」，桶内随机轮转。结果有两个硬伤：
+#   ① 同一个脚本跑两次，9 个镜头可以一个都不重样 —— 不可复现，用户觉得"不稳"；
+#   ② 桶太粗（嘉定 15 个目录压成 8 个桶），「厂牌logo / 卷帘门 / 电梯 / 消防管网」
+#      这类目录对一个 exterior 块永远不可达，而人工分镜恰恰会挑它们。
+# 现在改为「候选收集 + 统一打分排序」，生产路径与分镜预览共用 score_item()。
+# ---------------------------------------------------------------------------
+MATERIAL_HINTS = _S.get('material_hints', [])
+
+
+def _rel_dirs(item):
+    """素材所在目录链（'厂房内部/横屏'）——打分和目录提示都基于它。"""
+    chain = item.get('dir_chain')
+    if chain:
+        return '/'.join(chain).replace('\\', '/')
+    return os.path.dirname(item.get('path') or '').replace('\\', '/')
+
+
+def hint_bonus(text, item):
+    """块文本命中「脚本词 → 目录词」提示时返回 (加分, 命中的目录词)。
+
+    例：「上海嘉定产业园」命中 产业园→厂牌/logo/门头，「在这里开会洽谈」命中
+    会议→会议室。命中后即使该目录不在语义桶里，也能被选进候选。
+
+    注意：提示表只放「语义桶表达不了」的目录。「可整栋可分层」这类句子
+    本身有明确语义桶（inside），2026-11-27 铠畅要求落厂房内部，已从提示表移除。
+    """
+    if not MATERIAL_HINTS or not text:
+        return 0, ''
+    rel = _rel_dirs(item)
+    if not rel:
+        return 0, ''
+    low = rel.lower()
+    for h in MATERIAL_HINTS:
+        if not any(k in text for k in (h.get('keywords') or ())):
+            continue
+        for d in (h.get('dirs') or ()):
+            if d and d.lower() in low:
+                return int(h.get('bonus') or 55), d
+    return 0, ''
+
+
+def score_item(item, text, bucket_rank, need_us, prev_item=None,
+               orientation=None, used_count=0, min_slow=0.5, hint_floor=False):
+    """给单个候选打分（分越高越合适），返回 (score, reasons)。
+
+    ⚠️ 这是**唯一**的选片打分实现：match_materials（出片）与
+    storyboard.create_plan（预览）都调用它，保证"预览看到的 = 实际出的"。
+
+    hint_floor：该候选是「目录提示补盲」拉进来的（不在本块任何语义桶里）。
+        为 True 且当句确实命中提示时，把它抬到**首选桶同档**再算提示加分。
+        没有这一档时，桶外补盲素材会被桶默认（inside/factory）以 40 分基础分差
+        压掉 —— 脚本明明说了「在这里开会」，画面还是厂房内部
+        （2026-11-27 用户实测反馈该问题，修的是通用机制）。
+    """
+    reasons = []
+    score = 100.0
+    hb, hdir = hint_bonus(text, item)
+    floored = bool(hint_floor and hb)
+    rank = 0 if floored else bucket_rank
+    # 语义桶优先级：首选桶 140，回退桶逐级 -12；桶外（目录提示拉进来的）再低一档
+    score += max(0.0, 40.0 - 12.0 * rank)
+    if floored:
+        reasons.append('目录补盲·与首选桶同档')
+    elif bucket_rank == 0:
+        reasons.append('语义首选桶')
+    elif bucket_rank == 90:
+        reasons.append('目录提示命中')
+    elif bucket_rank >= 95:
+        reasons.append('未分类兜底')
+    else:
+        reasons.append('语义回退%d级' % bucket_rank)
+
+    if hb:
+        score += hb
+        reasons.append('目录命中「%s」' % hdir)
+
+    if item.get('kind') == 'image':
+        score -= 8
+        reasons.append('图片素材')
+
+    dur = item.get('duration') or 0
+    if need_us and dur:
+        ratio = dur / float(need_us)
+        if 0.8 <= ratio <= 4.0:
+            score += 12
+            reasons.append('时长适配')
+        elif ratio < 0.5:
+            score -= 25
+            reasons.append('时长偏短')
+        else:
+            score += 4
+            reasons.append('可安全截取')
+
+    if orientation and item.get('orientation') == orientation:
+        score += 8
+        reasons.append('方向一致')
+    elif orientation and item.get('orientation') not in (None, orientation):
+        score -= 18
+        reasons.append('方向回退')
+
+    used_count = int(used_count or 0)
+    if used_count:
+        score -= min(used_count, 10)
+        reasons.append('累计使用%d次' % used_count)
+    else:
+        reasons.append('近期未使用')
+
+    if prev_item:
+        if item.get('path') == prev_item.get('path'):
+            score -= 200
+            reasons.append('与前镜头同素材')
+        elif _rel_dirs(item) == _rel_dirs(prev_item):
+            score -= 45
+            reasons.append('与前镜头同目录')
+    return score, reasons
+
+
 def match_materials(subtitles, materials_dir, out_paths=False, max_run=5,
                     sub_durations=None, min_slow=0.5, park=None, seed=None,
                     video_orientation=None, script_text=None,
@@ -823,7 +943,9 @@ def match_materials(subtitles, materials_dir, out_paths=False, max_run=5,
         print('[方向过滤] %s: %d -> %d 个素材（剔除反向 %d 个）'
               % (video_orientation, before, len(items), before - len(items)))
 
-    rng = random.Random(seed)
+    # 2026-11-27：不再洗牌。选片改为确定性打分（见 score_item），
+    # 同一脚本 + 同一素材库 + 同一频次状态 → 每次结果一致。
+    # seed 参数保留只为兼容旧调用（工作台/脚本仍在传），已不参与计算。
     all_items = [it for it in all_items
                  if not (it.get('duration') and it['duration'] < MIN_MATERIAL_US)]
     items = [it for it in items
@@ -860,32 +982,33 @@ def match_materials(subtitles, materials_dir, out_paths=False, max_run=5,
                 print('[方向回退] 未分类池：无 %s 素材，回退用另一方向 %d 条'
                       % (video_orientation, len(fb_unused)))
 
-    for k in by_bucket:
-        rng.shuffle(by_bucket[k])
     unused = [it for it in items if it['bucket'] is None]
-    rng.shuffle(unused)
 
     # ---------- 按语义块分配素材（2026-09-07 落地用户语义块规则） ----------
     blocks = split_semantic_blocks(subtitles)
     matched = [None] * len(subtitles)
     prev_item = None
 
-    # ---------- 素材治理（P1-①）：大库启用使用频次降权 ----------
-    # 只在素材总数达标时启用：小库本来就没得选，再降权会把可选范围压到个位数，
-    # 成片反而更单调甚至凑不出素材（2026-09-08 贵阳仅 41 条实测得出的教训）。
-    # seed 模式同样启用：seed 固定了 shuffle 顺序、usage 是确定输入，
-    # 两者组合后仍可复现（同一 usage 状态下跑两次结果一致），便于调试观察。
+    # ---------- 选片（2026-11-27 改为确定性打分） ----------
+    # 旧实现：每个块取"第一个非空桶"，桶内 shuffle + 轮转 → 同脚本两次结果不同，
+    # 且桶外素材（厂牌/卷帘门/电梯/消防管网…）永远选不到。
+    # 新实现：候选 = 桶内素材 + 目录提示命中的桶外素材，统一 score_item() 打分排序。
     try:
         import material_governance as _mg
     except Exception:
         _mg = None
     usage = _mg.load_usage(usage_path) if _mg else {}
-    _DW_WINDOW = _mg.DOWNWEIGHT_WINDOW if _mg else 8
-    # 降权按**池**判断（不是按整个素材库）：池内素材够多才降权。
-    # 按库判断要么永不生效、要么误伤只有几个素材的小池，见 material_governance 说明。
-    dw_min = _mg.DOWNWEIGHT_MIN_POOL if _mg else 10 ** 9
 
-    pool_ptr = {}   # 每个素材池独立的轮转游标（见下方"轮转取用"注释）
+    def _usage_key(it):
+        p = it.get('path') or ''
+        if not p:
+            return ''
+        if _mg:
+            try:
+                return _mg._key(it)
+            except Exception:
+                pass
+        return os.path.normpath(os.path.abspath(p)).replace('\\', '/')
 
     def _orient_filter(lst):
         """跨园区借来的素材同样要过方向过滤。
@@ -895,46 +1018,75 @@ def match_materials(subtitles, materials_dir, out_paths=False, max_run=5,
         """
         if not video_orientation:
             return lst
-        matched = [it for it in lst
-                   if it.get('orientation') in (None, video_orientation)]
-        return matched or lst
+        keep = [it for it in lst
+                if it.get('orientation') in (None, video_orientation)]
+        return keep or lst
 
-    def pool_for(btype, text=''):
-        """按块类型的 bucket 优先级找第一个有素材的池（没有就降级到下一个）。
+    def buckets_of(btype, text=''):
+        """块类型 → 候选桶优先级（location/support 按块内实词动态排序）。"""
+        return (location_buckets(text) if btype == 'location'
+                else support_buckets(text) if btype == 'support'
+                else BLOCK_BUCKETS.get(btype, ['factory']))
 
-        2026-09-09 两处增强：
-        1. location 块按块内实际命中的交通词动态排序桶（轻轨→metro 而非公路）
-           support 块同理（食堂→canteen、办公→office、配套→environment）
-        2. 本园区全部落空后，从兄弟园区借同桶素材（factory 等园区特有桶除外）
+    def gather_candidates(btype, text):
+        """本园区候选：桶内素材 + 目录提示命中的桶外素材。
+
+        返回 (cands, ranks, bks)：ranks[path] = 桶优先级（0 首选；90 = 目录提示命中）。
         """
-        bks = (location_buckets(text) if btype == 'location'
-               else support_buckets(text) if btype == 'support'
-               else BLOCK_BUCKETS.get(btype, ['factory']))
-        for bk in bks:
-            p = by_bucket.get(bk)
-            if p:
-                return p
-        # 本园区没有 → 跨园区借用（仅限规则开放的桶，见 park_rules）
-        cross = cross_park_pool(materials_dir, cur_park=park_folder)
-        if cross:
-            for bk in bks:
-                if bk in NO_CROSS_BUCKETS:
+        bks = buckets_of(btype, text)
+        cands, ranks = [], {}
+        for rank, bk in enumerate(bks):
+            for it in by_bucket.get(bk, []):
+                p = it['path']
+                if p not in ranks:
+                    ranks[p] = rank
+                    cands.append(it)
+        # 目录提示：把"厂牌 / 卷帘门 / 地铁站"这类桶外但语义更准的素材拉进候选。
+        # 开场块例外：开场要的是"大气钩子"（门口/航拍），园区名句通常被并进开场块，
+        # 若让「产业园→厂牌」在这里生效，会把航拍整体挤掉（2026-11-27 实测）。
+        if btype != 'opening':
+            for it in items:
+                p = it['path']
+                if p in ranks:
                     continue
-                p = cross.get(bk)
-                if p:
-                    return _orient_filter(p)
-        return unused
+                if hint_bonus(text, it)[0]:
+                    ranks[p] = 90
+                    cands.append(it)
+        return cands, ranks, bks
+
+    def cross_candidates(bks):
+        """本园区一条都没有时，按规则从兄弟园区借（factory 等园区特有桶除外）。"""
+        cross = cross_park_pool(materials_dir, cur_park=park_folder)
+        if not cross:
+            return [], {}
+        cands, ranks = [], {}
+        for rank, bk in enumerate(bks):
+            if bk in NO_CROSS_BUCKETS:
+                continue
+            for it in _orient_filter(cross.get(bk) or []):
+                p = it['path']
+                if p not in ranks:
+                    ranks[p] = rank
+                    cands.append(it)
+        return cands, ranks
 
     def fit_ok(item, need_us):
         """素材放慢到 min_slow 能否撑住 need_us。"""
         cap = (item.get('duration') or 0) / min_slow
         return cap <= 0 or cap >= need_us
 
+    used_in_video = set()     # 同一条成片里已用过的素材：只在池子够大时压制
+
     for b in blocks:
         idxs = b['idxs']
         blk_text = ''.join((subtitles[i].get('text') or '') for i in idxs)
-        pool = pool_for(b['type'], blk_text)
-        if not pool:
+        cands, ranks, bks = gather_candidates(b['type'], blk_text)
+        if not cands:
+            cands, ranks = cross_candidates(bks)
+        if not cands:
+            cands = list(unused)
+            ranks = {it['path']: 95 for it in cands}
+        if not cands:
             for i in idxs:
                 matched[i] = prev_item
             continue
@@ -945,8 +1097,14 @@ def match_materials(subtitles, materials_dir, out_paths=False, max_run=5,
         #   ② 同一段落最多用 2 个图片素材（图片是静帧，堆多了像 PPT）
         block_prefers_video = bool(sub_durations) and blk_dur > LONG_SEG_US
         block_img_left = MAX_IMG_PER_BLOCK
-        best_cap = max(((it.get('duration') or 0) / min_slow) for it in pool)
-        if blk_dur > best_cap and len(idxs) > 1:
+        best_cap = max(((it.get('duration') or 0) / min_slow) for it in cands)
+        # 补盲素材往往比整块短（会议室 3s vs 承重+层高+配套 8s）：
+        # 整块塞不进补盲素材时按字幕拆开，否则它会被 fit_ok 直接滤掉，
+        # 又退回厂房内部 —— 脚本说了"可整栋可分层"也白说（2026-11-27 实测）。
+        hint_cap = max([((it.get('duration') or 0) / min_slow)
+                        for it in cands if ranks.get(it['path']) == 90] or [0])
+        split_for_hint = bool(hint_cap) and blk_dur > hint_cap and len(idxs) > 1
+        if (blk_dur > best_cap or split_for_hint) and len(idxs) > 1:
             groups = [[i] for i in idxs]
         else:
             groups = [idxs]
@@ -954,15 +1112,6 @@ def match_materials(subtitles, materials_dir, out_paths=False, max_run=5,
             need = sum(sub_durations[i] for i in grp) if sub_durations else 0
             # 本组也优先视频：整段 >5s，或该组自身就 >5s（容量拆分后才可能）
             prefer_video = block_prefers_video or need > LONG_SEG_US
-            item = None
-            # 轮转取用：每个池记住上次取到哪，下次从下一个接着找。
-            # 旧实现每块都从 pool[0] 开始扫，于是永远是"跳过刚用过的那个、
-            # 再拿池里第一个能撑住的" —— 单条成片只在 pool 前两个素材之间来回切，
-            # 池里其余素材一次都用不到。
-            # 贵阳实测：厂房外部横屏有 9 个素材，7 个语义块却只用了 2 个来回出现。
-            key = id(pool)
-            n = len(pool)
-            start = pool_ptr.get(key, 0)
 
             def _cand_ok(cand):
                 """容量达标 + 段落图片约束：优先视频 / 图片额度用尽则跳过图片。"""
@@ -970,43 +1119,38 @@ def match_materials(subtitles, materials_dir, out_paths=False, max_run=5,
                     return False
                 return fit_ok(cand, need)
 
-            if len(pool) >= dw_min:
-                # 降权：先在窗口内收集所有可用候选，再挑用得最少的。
-                # 仍从游标 start 开始扫，因此"不邻近重复"的轮转行为保持不变 ——
-                # 降权只在窗口内部决定取哪一个，不推翻轮转。
-                cands = []
-                for off in range(n):
-                    cand = pool[(start + off) % n]
-                    if prev_item is not None and cand['path'] == prev_item['path'] \
-                            and len(pool) > 1:
-                        continue
-                    if _cand_ok(cand):
-                        cands.append((off, cand))
-                    if len(cands) >= _DW_WINDOW:
-                        break
-                if cands:
-                    pos, item = _mg.pick_least_used([c for _, c in cands],
-                                                    usage, return_pos=True)
-                    pool_ptr[key] = (cands[pos][0] + 1) % n
-            else:
-                for off in range(n):
-                    cand = pool[(start + off) % n]
-                    if prev_item is not None and cand['path'] == prev_item['path'] \
-                            and len(pool) > 1:
-                        continue
-                    if _cand_ok(cand):
-                        item = cand
-                        pool_ptr[key] = (start + off + 1) % n
-                        break
+            rows = []
+            for it in cands:
+                if not _cand_ok(it):
+                    continue
+                if prev_item is not None and it['path'] == prev_item['path'] \
+                        and len(cands) > 1:
+                    continue
+                n_used = int((usage.get(_usage_key(it)) or {}).get('n', 0))
+                sc, rs = score_item(it, blk_text, ranks.get(it['path'], 95), need,
+                                    prev_item=prev_item, orientation=video_orientation,
+                                    used_count=n_used, min_slow=min_slow,
+                                    hint_floor=(ranks.get(it['path']) == 90))
+                rows.append((sc, n_used, it, rs))
+            # 同片内不重复：池子够大就只从没露过面的里挑，用完才允许复用
+            if len(rows) > 1:
+                fresh = [r for r in rows if r[2]['path'] not in used_in_video]
+                if fresh:
+                    rows = fresh
+            item = None
+            if rows:
+                rows.sort(key=lambda r: (-r[0], r[1], r[2]['path'].lower()))
+                item = rows[0][2]
             if item is None:
                 # 都撑不住 / 全被图片约束滤掉：尽量挑视频，退而求其次用任意素材
-                vids = [it for it in pool if it.get('kind') == 'video']
+                vids = [it for it in cands if it.get('kind') == 'video']
                 item = (max(vids, key=lambda it: it.get('duration') or 0)
-                        if vids else max(pool, key=lambda it: it.get('duration') or 0))
-                pool_ptr[key] = (start + 1) % n
+                        if vids else max(cands, key=lambda it: it.get('duration') or 0))
             # 记录图片占用（段落级额度，跨组内小组共享）
             if item is not None and item.get('kind') == 'image':
                 block_img_left -= 1
+            if item is not None:
+                used_in_video.add(item['path'])
             for i in grp:
                 matched[i] = item
             prev_item = item

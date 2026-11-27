@@ -87,6 +87,34 @@ def ch_jianying(hint=''):
                 'fix': '安装剪映专业版；或在生成/校验时用 --install 指定目录'}
 
 
+def ch_editor_version(hint=''):
+    """剪映版本兼容性：加密能不能写、解密能不能读回来。
+
+    WARN 不等于坏了 —— 11.7 起 decrypt 恒返空，草稿写入和加密都是正常的，
+    只是自检核对不了内容。这里给 WARN 就是为了让人别把「自检失败」当成「草稿坏了」。
+    """
+    try:
+        import editor_version as ev
+        info = ev.probe(hint)
+        if info['level'] == 'missing':
+            return {'name': '剪映版本兼容', 'status': 'FAIL', 'msg': info['note'],
+                    'fix': '安装剪映专业版，或用 --install 指定目录'}
+        # 判定口径：这一项问的是"能不能正常出片"。
+        # 已知版本解密不可用（11.7+）**不影响出片**，记 PASS 并在文案里说明；
+        # 只有"没验证过的新版本"才 WARN —— 那种情况才需要人去看一眼片子。
+        lv = {'ok': 'PASS', 'warn': 'PASS', 'unknown': 'WARN'}.get(info['level'], 'WARN')
+        msg = '%s · %s' % (info['version'] or '版本未解析', info['note'])
+        if info['level'] == 'warn':
+            msg = '%s · 不影响出片：%s' % (info['version'] or '版本未解析', info['note'])
+        return {'name': '剪映版本兼容', 'status': lv, 'msg': msg,
+                'fix': '' if lv == 'PASS' else
+                       '新版本尚未验证：出片后打开剪映目视确认；'
+                       '工具会把该版本的实测结论记到 config/editor_versions.json'}
+    except Exception as e:
+        return {'name': '剪映版本兼容', 'status': 'WARN', 'msg': str(e),
+                'fix': '版本检测模块加载失败，不影响出片'}
+
+
 def ch_drafts_dir(out_dir=None):
     d = out_dir or DEFAULT_OUT
     try:
@@ -280,7 +308,8 @@ def ch_material_manifest(materials_dir):
 # ---------------------------------------------------------------------------
 def run_all(materials_dir=None, jy_hint='', drafts_dir=None, verbose=True):
     _sys_path_setup()
-    return [ch_python(), ch_jianying(jy_hint), ch_drafts_dir(drafts_dir),
+    return [ch_python(), ch_jianying(jy_hint), ch_editor_version(jy_hint),
+            ch_drafts_dir(drafts_dir),
             ch_materials(materials_dir, verbose), ch_semantics(), ch_modules(),
             ch_baseline(materials_dir), ch_usage_writable(), ch_release_manifest(),
             ch_material_manifest(materials_dir)]

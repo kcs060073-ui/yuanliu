@@ -94,6 +94,31 @@ def main():
         assert db.probe_media_orientation(bogus) is None
         assert mm._resolve_orientation(bogus, 'portrait', 'video') == 'portrait'
 
+        # ⑦ moov 既不在头部 2MB、也不在尾部 2MB（DJI 4K 实测形态）
+        #    2026-11-12：新仓 16 条 DJI 素材探测全返回 None，根因是尾部兜底窗口
+        #    只有 2MB，而 moov 距文件尾 3.3MB，够不到 → 必须按顶层 box 链定位 moov。
+        pm = os.path.join(td, 'mid_moov.mp4')
+        pad = b'\x00' * (4 * 1024 * 1024)
+        mid = _box(b'ftyp', b'isom' + b'\x00\x00\x02\x00' + b'isomiso2')
+        mid += _box(b'mdat', pad)                      # moov 落在 ~4MB
+        mid += _box(b'moov', _box(b'trak', _tkhd_v0(3840, 2160, 0)))
+        mid += _box(b'free', pad)                      # 尾部 4MB 填充，尾窗够不到 moov
+        with open(pm, 'wb') as f:
+            f.write(mid)
+        assert db.probe_media_size(pm) == (3840, 2160), 'moov 在文件中段时尺寸探测失败'
+        assert db.probe_media_orientation(pm) == 'landscape'
+
+        # ⑧ 竖拍 DJI（中段 moov + 旋转 90°）也要能判成竖屏
+        pmv = os.path.join(td, 'mid_moov_rot.mp4')
+        mid = _box(b'ftyp', b'isom' + b'\x00\x00\x02\x00' + b'isomiso2')
+        mid += _box(b'mdat', pad)
+        mid += _box(b'moov', _box(b'trak', _tkhd_v0(3840, 2160, 90)))
+        mid += _box(b'free', pad)
+        with open(pmv, 'wb') as f:
+            f.write(mid)
+        assert db.probe_media_orientation(pmv) == 'portrait', '中段 moov 的竖拍素材未识别'
+        assert db.probe_media_display_size(pmv) == (2160, 3840)
+
     print('PASS media orientation')
     return 0
 

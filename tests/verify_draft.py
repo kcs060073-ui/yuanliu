@@ -4,6 +4,11 @@
 
 用法：
   python tests/verify_draft.py <草稿目录> [--install 剪映安装目录]
+
+退出码：
+  0  通过
+  1  未通过（草稿本身有问题）
+  3  未能校验 —— 剪映解密 API 不可用（11.7+），草稿没被核对，但也没被判定为坏
 """
 import json
 import os
@@ -45,6 +50,13 @@ def resolve_path(p, draft_dir):
     return os.path.normpath(p).replace('\\', '/')
 
 
+EXIT_UNVERIFIED = 3
+
+
+class DecryptUnavailable(RuntimeError):
+    """剪映解密 API 不可用（11.7+ 恒返空）。这是环境问题，不是草稿损坏。"""
+
+
 def crypto(mode, src, dst, install_dir):
     last = ''
     for _ in range(5):
@@ -63,6 +75,9 @@ def crypto(mode, src, dst, install_dir):
         # rc=2 是"确定性失败"（如 剪映 11.7+ 解密 API 不兼容），重试无意义
         if r.returncode == 2:
             break
+    # 解密 API 失效 ≠ 草稿损坏：调用方要能区分，否则批量出片全部被判 FAIL
+    if mode == '-d' and 'decrypt returned empty' in last:
+        raise DecryptUnavailable(last)
     raise SystemExit('解密失败: %s%s' % (src, ('\n  ' + last) if last else ''))
 
 
@@ -97,8 +112,22 @@ def main():
     # 唯一临时名：固定名 verify.json 一旦被上次中断的残留占住（Windows 文件锁），
     # jy_crypto 写不进去 → 连重试 5 次后误报"解密失败"（2026-09-15 实测踩到）。
     tmp = os.path.join(tmpdir, 'verify_%d.json' % os.getpid())
-    crypto('-d', os.path.join(draft_dir, 'draft_content.json'), tmp, install)
-    draft = json.load(open(tmp, encoding='utf-8'))
+    try:
+        crypto('-d', os.path.join(draft_dir, 'draft_content.json'), tmp, install)
+    except DecryptUnavailable as e:
+        # 明确区分「没能校验」和「校验不通过」：批量出片时前者不该算 FAIL
+        print('[SKIP] 未能校验：剪映解密 API 不可用（这是剪映版本问题，不是草稿损坏）')
+        print('       %s' % e)
+        print('       草稿已正常写入，请打开剪映目视确认画面。')
+        print('       参见 SKILL.md「已知问题」→ 剪映 11.7 起 decrypt 恒返空。')
+        return EXIT_UNVERIFIED
+    try:
+        draft = json.load(open(tmp, encoding='utf-8'))
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
 
     problems = []
     frame = 1e6 / 30

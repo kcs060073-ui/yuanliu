@@ -38,6 +38,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import draft_builder
 import draft_naming
 import bgm_pool
+import editor_version
 import jianying_path
 import production_log
 import material_governance
@@ -285,27 +286,59 @@ def self_check_semantics():
         return False
 
 
+def _decode_out(b):
+    """子进程输出解码：优先 UTF-8，乱码多则回退 GBK。
+
+    生产机上没设 PYTHONIOENCODING 时，子进程 stderr 走 cp936，
+    按 UTF-8 硬解会得到一堆 U+FFFD —— 台账里就变成"����ʧ��"，
+    既看不懂也匹配不上关键字（2026-11-25 实测踩到）。
+    """
+    if not b:
+        return ''
+    s = b.decode('utf-8', 'replace')
+    if s.count('\ufffd') > 3:
+        try:
+            s = b.decode('gbk')
+        except UnicodeDecodeError:
+            pass
+    return s
+
+
 def run_verify(draft_dir, install_dir):
     """跑一遍草稿自检，返回台账要记的结果字符串。
 
     自检失败**不影响出片**：草稿已经写好了，这里只是把结论记进台账，
     供批量结束后统一排查。任何异常都降级成 SKIP，绝不打断流程。
+
+    返回值三态：
+      PASS —— 核对通过
+      SKIP:… —— 没能核对（剪映 11.7+ 解密 API 不可用），草稿不代表坏了
+      FAIL:… —— 核对不通过，草稿本身有问题
     """
     script = os.path.join(HERE, '..', 'tests', 'verify_draft.py')
     try:
+        env = dict(os.environ, PYTHONIOENCODING='utf-8', PYTHONUTF8='1')
         p = subprocess.run(
             [sys.executable, script, draft_dir, '--install', install_dir],
-            capture_output=True, text=True, encoding='utf-8', errors='replace',
-            timeout=300)
+            capture_output=True, timeout=300, env=env)
+        out, err = _decode_out(p.stdout), _decode_out(p.stderr)
         if p.returncode == 0:
             return 'PASS'
-        probs = [l.strip(' -') for l in (p.stdout or '').splitlines()
+        if p.returncode == 3:
+            # 解密 API 不可用：明确标成"未校验"，不能算失败，也不能算通过。
+            # 自检把说明打在 stdout（不是 stderr），两路都要找。
+            lines = [l.strip() for l in (out + '\n' + err).splitlines() if l.strip()]
+            reason = next((l for l in lines if 'decrypt returned empty' in l), '')
+            if not reason:
+                reason = '剪映解密 API 不可用（decrypt 恒返空）'
+            return 'SKIP:%s；草稿已写入但未经核对' % reason
+        probs = [l.strip(' -') for l in out.splitlines()
                  if l.strip().startswith('-') or l.strip().startswith('   -')]
         probs = [x for x in probs if x]
         if not probs:
             # 自检以 SystemExit 报错时（如解密失败），原因在 stderr，台账不能只剩 rc=1
-            tail = [l.strip() for l in (p.stderr or '').splitlines() if l.strip()]
-            tail += [l.strip() for l in (p.stdout or '').splitlines() if l.strip()]
+            tail = [l.strip() for l in err.splitlines() if l.strip()]
+            tail += [l.strip() for l in out.splitlines() if l.strip()]
             probs = tail[-2:]
         return 'FAIL:' + ('; '.join(probs[:3]) if probs else 'rc=%d' % p.returncode)
     except Exception as e:
@@ -471,6 +504,15 @@ def main():
     tone_cfg = resolve_tone(args.tone, style_name)
 
     install_dir = find_install_dir(args.install)
+    # ---- 剪映版本兼容性预判（2026-11-25）----
+    # 逻辑：读出版本号 → 已实测过的版本直接给结论；没见过的只告警不拦停。
+    # 为什么不拦停：版本升级不等于写不了草稿。真正写不进去会以 OSError /
+    # 加密异常抛出（write_draft 里会中断），用版本号去猜反而误伤。
+    # 成本：首次约 1ms（走 jianying_path 一次目录探测），其余走进程内缓存。
+    _ev_info = editor_version.probe(install_dir)
+    print(editor_version.summary(_ev_info))
+    if _ev_info.get('version') and _ACTIVE_RECEIPT is not None:
+        _ACTIVE_RECEIPT.data.setdefault('versions', {})['editor'] = _ev_info['version']
     out_root = (os.path.join(ctx.state_root, 'drafts') if ctx.mode == 'test'
                 else os.path.abspath(args.out))
 
@@ -664,6 +706,21 @@ def main():
     # 15 人批量出片时，「谁的哪一条出问题」是最贵的一个问题。
     # 自检失败只记账、不回滚 —— 草稿已经写好，让人自己判断要不要重出。
     verify_result = run_verify(draft_dir, install_dir)
+    # PASS 才算核对通过；SKIP 表示"没能核对"（剪映 11.7+ 解密 API 不可用）。
+    # 后者草稿是写成功的，不能判 FAILED —— 否则每条产出都红，台账就没法用了。
+    verify_ok = verify_result.startswith('PASS')
+    verify_skipped = verify_result.startswith('SKIP')
+    # 把本机实测结论写回 config/editor_versions.json：同一个版本第二次出片
+    # 就能直接说出「解密可不可用」，不用再猜。只在结论明确时记录 ——
+    # 结构性失败（段时长不符、素材缺失）不是版本问题，不写。
+    if verify_ok:
+        editor_version.record_result(_ev_info.get('version', ''), True)
+    elif verify_skipped or '解密失败' in verify_result:
+        editor_version.record_result(_ev_info.get('version', ''), False,
+                                      verify_result[:160])
+    warns = list(info.get('warnings') or [])
+    if verify_skipped:
+        warns.append('自检未执行：剪映解密 API 不可用，草稿已写入但未经核对')
     log_path = production_log.append_record(
         timestamp=time.strftime('%Y-%m-%d %H:%M:%S'),
         editor=args.editor.strip() or production_log.default_editor(),
@@ -692,12 +749,13 @@ def main():
     if log_path:
         print('[台账] 自检 %s → 已记入 %s' % (verify_result, log_path))
     receipt_path = _ACTIVE_RECEIPT.finish(
-        verify_result.startswith('PASS'), draft_dir=draft_dir, verify=verify_result,
+        verify_ok or verify_skipped, draft_dir=draft_dir, verify=verify_result,
+        verified=verify_ok,
         materials=selected_materials_from_info(info), production_log=log_path or '',
         # warnings 为**新增**字段（P05 §7 要求"任务回执必须标记本机未找到可用BGM"）。
         # 其余字段与 P04 完全一致，读旧回执的程序不受影响。
-        warnings=list(info.get('warnings') or []),
-        error='' if verify_result.startswith('PASS') else verify_result)
+        warnings=warns,
+        error='' if (verify_ok or verify_skipped) else verify_result)
     print('[回执] %s' % receipt_path)
     _ACTIVE_RECEIPT = None
 

@@ -161,6 +161,27 @@ def validate(cfg, path='<memory>'):
                 elif known_buckets:
                     _check_bucket_names(fld + '.bucket', [bk])
 
+    # ---- 目录提示（2026-11-27 新增；可选，缺省 = 只按语义桶选片）----
+    mhints = cfg.get('material_hints')
+    if mhints is not None:
+        if not isinstance(mhints, list):
+            errs.append(where('material_hints') + '：必须是数组')
+        else:
+            for i, h in enumerate(mhints):
+                fld = 'material_hints[%d]' % i
+                if not isinstance(h, dict):
+                    errs.append(where(fld) + '：必须是 {"keywords": [...], "dirs": [...]}')
+                    continue
+                for key in ('keywords', 'dirs'):
+                    v = h.get(key)
+                    if not isinstance(v, list) or not v:
+                        errs.append(where(fld + '.' + key) + '：必须是非空数组')
+                    elif not all(isinstance(x, str) and x for x in v):
+                        errs.append(where(fld + '.' + key) + '：元素必须是非空字符串')
+                bonus = h.get('bonus', 60)
+                if not isinstance(bonus, int) or bonus <= 0:
+                    errs.append(where(fld + '.bonus') + '：必须是正整数（缺省 60）')
+
     # ---- 禁止跨园区的桶 ----
     ncb = cfg.get('no_cross_buckets')
     if not isinstance(ncb, list):
@@ -258,6 +279,12 @@ def get_semantics(path=None):
         'support_bucket_hints': tuple(
             (tuple(h['keywords']), h['bucket'])
             for h in (cfg.get('support_bucket_hints') or [])),
+        # 目录提示（2026-11-27 新增）：脚本词 → 素材目录词，让「厂牌/卷帘门/电梯」
+        # 这类桶外目录也能被选中。老配置没有这个键时给空表 = 保持旧行为。
+        'material_hints': tuple(
+            {'keywords': tuple(h['keywords']), 'dirs': tuple(h['dirs']),
+             'bonus': int(h.get('bonus') or 60)}
+            for h in (cfg.get('material_hints') or [])),
     }
 
 

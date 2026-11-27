@@ -265,8 +265,8 @@ _DUR_CACHE = {}
 
 # 缓存键版本：改了探测算法就 +1，旧缓存条目自动失效（不然会把历史错值一直读回来）
 # v2（2026-11-02）：修正 tkhd v0 偏移 76→84、补尾部 moov 兜底
-_SIZE_CACHE_VER = 'v2'
-_ORIENT_CACHE_VER = 'o1'
+_SIZE_CACHE_VER = 'v3'
+_ORIENT_CACHE_VER = 'o2'
 
 
 def _find_ffmpeg():
@@ -350,6 +350,17 @@ def probe_media_duration(path):
                 dur = _mvhd_duration(tail[idx - 4:])
         except OSError:
             pass
+    if not dur:
+        # 快路径 3：按顶层 box 链定位 moov 再取 mvhd。
+        # 2026-11-16 新增：与 _tkhd_boxes_in 的第三级兜底同源 —— DJI 4K 素材的
+        # moov 距文件尾可达 2.57MB（实测嘉定 门口 436MB 文件），尾窗 2MB 够不到，
+        # 时长探测全部返回 None → 出片按 1 倍速铺，素材比段落短时画面会提前播完。
+        moov = _moov_bytes(path)
+        if moov:
+            for box in _read_boxes(moov, 0, 'mvhd'):
+                dur = _mvhd_duration(box)
+                if dur:
+                    break
     if not dur:
         # 兜底: ffmpeg（对 mov/mkv 等非 mp4 box 结构可靠）
         dur = _ffmpeg_duration(path)
@@ -467,6 +478,47 @@ def _tkhd_boxes_in(path):
         if 8 <= bsz <= len(tail) - start:
             yield tail[start:start + bsz]
         i += 4
+    # 兜底 2：按顶层 box 链定位 moov 再读。
+    # 2026-11-12 新增：DJI 4K 素材的 moov 距文件尾可能超过 2MB
+    # （实测 87.4MB 文件 moov 在 88.2MB 处，尾窗 89.6MB 起，完全够不到），
+    # 只靠尾部窗口会全部探测失败。这里只 seek 读 box 头 + 读 moov 本体，
+    # 不读 mdat，90MB 文件毫秒级返回。
+    moov = _moov_bytes(path)
+    if moov:
+        for box in _read_boxes(moov, 0, 'tkhd'):
+            yield box
+
+
+def _moov_bytes(path):
+    """按顶层 box 链定位 moov 并返回其字节；找不到返回 None。"""
+    try:
+        total = os.path.getsize(path)
+        with open(path, 'rb') as f:
+            off = 0
+            while off + 8 <= total:
+                f.seek(off)
+                hdr = f.read(16)
+                if len(hdr) < 8:
+                    return None
+                bsz = int.from_bytes(hdr[0:4], 'big')
+                typ = hdr[4:8]
+                hlen = 8
+                if bsz == 1:
+                    if len(hdr) < 16:
+                        return None
+                    bsz = int.from_bytes(hdr[8:16], 'big')
+                    hlen = 16
+                elif bsz == 0:
+                    bsz = total - off
+                if bsz < hlen or off + bsz > total:
+                    return None
+                if typ == b'moov':
+                    f.seek(off)
+                    return f.read(bsz)
+                off += bsz
+    except OSError:
+        return None
+    return None
 
 
 def _probe_media_size_uncached(path):

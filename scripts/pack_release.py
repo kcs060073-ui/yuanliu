@@ -44,14 +44,19 @@ BAT_SRC = os.path.join(SKILL_DIR, 'workbench', '创建桌面快捷方式.bat')
 BAT_IN_ZIP = '创建桌面快捷方式.bat'
 HELP_SRC = os.path.join(SKILL_DIR, 'workbench', 'shortcut-help.txt')
 HELP_IN_ZIP = 'shortcut-help.txt'
-TABLE_SRC = os.path.join(PACK_ROOT, TABLE_IN_ZIP)
+# 表格正本在技能目录内（与桌面副本同步）。旧版曾放在 skills 上层目录，
+# 那里现在已清理，保留回退只为兼容老机器上的目录结构。
+TABLE_SRC = next((p for p in (os.path.join(SKILL_DIR, TABLE_IN_ZIP),
+                              os.path.join(PACK_ROOT, TABLE_IN_ZIP))
+                  if os.path.isfile(p)),
+                 os.path.join(SKILL_DIR, TABLE_IN_ZIP))
 DEPLOY_IN_ZIP = '00-部署说明.txt'
 DEPLOY_SRC = os.path.join(PACK_ROOT, DEPLOY_IN_ZIP)
 INSTALL_PY = os.path.join(PACK_ROOT, 'install_p05.py')
 INSTALL_BAT = os.path.join(PACK_ROOT, '安装或升级P05.bat')
 
 EX_DIRS = {'__pycache__', '_tmp', '_tts_probe'}
-EX_FILES = {'gui_settings.json'}
+EX_FILES = {'gui_settings.json', 'editor_versions.json', 'materials_baseline.json'}
 # 整目录排除（本机资产，各机器各留一份）
 EX_TOP = {'output', 'state'}
 
@@ -66,30 +71,39 @@ _VER_RE = re.compile(r'\b\d{6}-P\d{2}\b'        # 260916-P05
                      r'|安装或升级[pP]\d{2}\b')   # 安装或升级P05
 
 
-def sync_deploy_text(raw_bytes, ver):
+def sync_deploy_text(raw_bytes, ver, manual_name=''):
     """把部署说明里的旧版本串统一成本次版本，再写进 zip。
 
     覆盖四种写法：``260916-P03`` / ``P03`` / ``install_p03.py`` / ``安装或升级P03.bat``。
     不动其它数字 —— 手工维护的说明里还有 3 步流程、3 毛租金之类的正文。
+
+    ⚠️ 安装器文件名**固定**是 ``install_p05.py`` / ``安装或升级P05.bat``，
+    不随发布版本改（包里就是这两个文件）。说明文字必须跟真实文件名逐字符一致，
+    否则同事照着说明找不到文件 —— 2026-11-27 打包时踩过：说明写 install_p11.py，
+    包里却只有 install_p05.py。
     """
     txt = raw_bytes.decode('utf-8', errors='replace')
-    short = ver.split('-')[-1]                      # P05
+    short = ver.split('-')[-1]                      # P11
+    inst_py = os.path.splitext(os.path.basename(INSTALL_PY))[0]      # install_p05
+    inst_bat = os.path.splitext(os.path.basename(INSTALL_BAT))[0]   # 安装或升级P05
 
     def _sub(m):
         s = m.group(0)
         low = s.lower()
         if low.startswith('install_'):
-            # 安装器脚本名是 **全小写** 的 install_pNN.py（Windows 虽然不区分大小写，
-            # 但说明文字里出现 install_P05.py 会让人怀疑自己看错了文件 ——
-            # 保持与真实文件名逐字符一致）。
-            return 'install_' + short.lower()
+            return inst_py
         if s.startswith('安装或升级'):
-            return '安装或升级' + short
-        if '-' in s:                                # 260916-P03 → 260916-P05
+            return inst_bat
+        if '-' in s:                                # 260916-P03 → 260916-P11
             return ver
-        return short                                # P03 → P05
+        return short                                # P03 → P11
 
-    return _VER_RE.sub(_sub, txt).encode('utf-8')
+    txt = _VER_RE.sub(_sub, txt)
+    if manual_name:
+        # 说明里列举的文件名要跟包内真实文件一致（版本日期会变）
+        txt = re.sub(r'源流园区短视频素材分配规则使用手册[^\s。，、]*\.docx',
+                     manual_name, txt)
+    return txt.encode('utf-8')
 
 
 # 发布包里**不允许**出现的"指向旧版本的有效操作指令"。
@@ -167,6 +181,10 @@ _PRIVACY_SUBS = (
     (re.compile(r'[A-Za-z]:[\\/]Users[\\/](?![<%])[^\\/"\'<>%]+'), r'C:\\Users\\<你的用户名>'),
 )
 
+# 文档属性里的**裸用户名**（Office 会把作者/最后修改人写成账号名，没有路径前缀）。
+# 只替换值本身等于管理员账号的标签，别把文档原有的正常作者名一起改掉。
+_DOCPROP_TAG = re.compile(r'<(dc:creator|cp:lastModifiedBy)>([^<]*)</\1>')
+
 # 打包前对**技能本体**做硬性隐私扫描。为什么不在 zip 里顺手改写：
 # 技能本体的每个文件都被 release_manifest.json 记了 sha256，upgrade.py
 # 解包后会逐个核对；打包时改写字节 = 哈希对不上 = 同事升级直接失败。
@@ -202,6 +220,23 @@ def private_hits(root):
     return hits
 
 
+def _scrub_docprops(txt):
+    """把文档属性（dc:creator / cp:lastModifiedBy）里的管理员账号换成中性署名。
+
+    只改**值本身命中**的标签：xlsx/docx 可能是别人做的，正常作者名不该被动。
+    """
+    changed = []
+
+    def _rep(m):
+        if any(p in m.group(2) for p in _PRIVATE_HARD):
+            changed.append(m.group(1))
+            return '<%s>源流工具链</%s>' % (m.group(1), m.group(1))
+        return m.group(0)
+
+    out = _DOCPROP_TAG.sub(_rep, txt)
+    return out, bool(changed)
+
+
 def sanitize_bytes(data, label, hits=None):
     """通用隐私清洗：把管理员机器上的具体用户目录换成占位符。
 
@@ -217,6 +252,9 @@ def sanitize_bytes(data, label, hits=None):
                 if hits is not None:
                     hits.append(label)
                 txt = rx.sub(rep, txt)
+        txt, prop_changed = _scrub_docprops(txt)
+        if prop_changed and hits is not None:
+            hits.append(label + '（文档属性）')
         return txt.encode('utf-8')
     return data
 
@@ -292,8 +330,11 @@ def main():
     ver_date = human_date(ver6)
 
     manual_src = newest_manual()
-    manual_name = re.sub(r'-\d{6}\.docx$', '', os.path.basename(manual_src)) \
-        + '-%s.docx' % ver6
+    # 手册可能叫「…使用手册.docx」或「…使用手册-260921.docx」，两种都要归一成
+    # 「…使用手册-<本次版本日期>.docx」，不能拼出 xxx.docx-261127.docx。
+    _mbase = re.sub(r'\.docx$', '', os.path.basename(manual_src), flags=re.I)
+    _mbase = re.sub(r'-\d{6}$', '', _mbase)
+    manual_name = _mbase + '-%s.docx' % ver6
 
     for p in (manual_src, TABLE_SRC, BAT_SRC, HELP_SRC, DEPLOY_SRC, INSTALL_PY, INSTALL_BAT):
         if not os.path.isfile(p):
@@ -316,7 +357,8 @@ def main():
         # 外层 7 项。文本/容器类先做隐私清洗；部署说明额外把版本串同步成本次版本。
         # 这些文件不在 release_manifest 的哈希清单里，改写字节是安全的。
         z.writestr(DEPLOY_IN_ZIP,
-                   sync_deploy_text(io.open(DEPLOY_SRC, 'rb').read(), ver))
+                   sync_deploy_text(io.open(DEPLOY_SRC, 'rb').read(), ver,
+                                    manual_name))
         z.writestr('install_p05.py',
                    sanitize_packaged(INSTALL_PY, 'install_p05.py', scrubbed))
         z.writestr('安装或升级P05.bat', io.open(INSTALL_BAT, 'rb').read())

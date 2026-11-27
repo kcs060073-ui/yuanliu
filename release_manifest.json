@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "release_version": "261102-P06",
+  "release_version": "261127-P11",
   "min_upgrade_from": "260916-P02",
   "data_schema_version": 1,
-  "created_at": "2026-11-02 17:21:32",
+  "created_at": "2026-11-27 11:00:20",
   "protected_paths": [
     "output/",
     "state/",
@@ -19,14 +19,20 @@
     },
     {
       "path": "SKILL.md",
-      "size": 69885,
-      "sha256": "0b4aa1f72847d4bc9bd94fe979968dbc7366b667a988978f6f58ddfc8c21375b",
+      "size": 77335,
+      "sha256": "450a25785e0c57f9244575c2077809ff57ad18089a630c71090e8f8afd9e0c35",
       "policy": "official"
     },
     {
       "path": "config/default_styles.json",
       "size": 5657,
       "sha256": "48281220f709872389c61c3678a937f1975cf77fb504245a6f8f1d68a510ae11",
+      "policy": "official"
+    },
+    {
+      "path": "config/editor_versions.json.lock",
+      "size": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
       "policy": "official"
     },
     {
@@ -37,8 +43,8 @@
     },
     {
       "path": "config/semantics.json",
-      "size": 7489,
-      "sha256": "fe2047043021a1a7897e5159df6e26cd5b2159cf96477eca9b1cc4699ab4f193",
+      "size": 12162,
+      "sha256": "ea070d3dca21f0ffa215fe8152468e222d26b55721af9c814b4f1afd2356a910",
       "policy": "official"
     },
     {
@@ -67,26 +73,32 @@
     },
     {
       "path": "scripts/build_rules_xlsx.py",
-      "size": 30278,
-      "sha256": "eb0406761743774cc6e0fd133abc4c08ae6e6d48f971ec457913021daba0b0f9",
+      "size": 33051,
+      "sha256": "f29369f4d6633e34e7694e44005adcea72f621e782c0e89927cc7e3d5c93afdc",
       "policy": "official"
     },
     {
       "path": "scripts/doctor.py",
-      "size": 16115,
-      "sha256": "807377637cc576e11ed18219e2fb69983d9af56236011a5cfce490d0d49c3e8f",
+      "size": 17857,
+      "sha256": "ec47dac7a284fe6aa688689312af1a83c0be72eba8b9c82982ef273fbfd13269",
       "policy": "official"
     },
     {
       "path": "scripts/draft_builder.py",
-      "size": 65796,
-      "sha256": "4e00db54e0c84aba000190c1ceaae2055165a2bbbc3ef99a8c0b00ed98ac9ec1",
+      "size": 67896,
+      "sha256": "e0af638a9cc1cc0f0a222fa25b11fefe8fc7fa9bf65bf79ae4329ab87932ae04",
       "policy": "official"
     },
     {
       "path": "scripts/draft_naming.py",
       "size": 15573,
       "sha256": "c932ac02db997e34274681f9e14c57fdbef4dea8e6fc875807e90edec740c45b",
+      "policy": "official"
+    },
+    {
+      "path": "scripts/editor_version.py",
+      "size": 7797,
+      "sha256": "e2f6693236b5901153a48f7eb11b83fccc53c6a8f9bc90c0474d26b95b200d0c",
       "policy": "official"
     },
     {
@@ -115,8 +127,8 @@
     },
     {
       "path": "scripts/make_park_video.py",
-      "size": 41798,
-      "sha256": "abc083999790435ab980dfa7216184d151e3ddbbf893c391576548c18e3cf734",
+      "size": 44947,
+      "sha256": "03aeb5f7d9d09d8a4c767f6f7a4b05baa2e7b48da31e025474eb83475e2dd03b",
       "policy": "official"
     },
     {
@@ -133,14 +145,14 @@
     },
     {
       "path": "scripts/material_matcher.py",
-      "size": 56842,
-      "sha256": "2a476e1fbb94ffb6865e03fb511e2594b494d453202f05fbedf4ba1c55b74b91",
+      "size": 63944,
+      "sha256": "dc3112ca5e4afecdd3958529ec7fe7649b78bd18d923e39aaf6c9bfdf6bdc676",
       "policy": "official"
     },
     {
       "path": "scripts/pack_release.py",
-      "size": 18155,
-      "sha256": "5176b1bcf988266cb0d95c90eb2b79068a57e03051a262791e59ded97198f3a2",
+      "size": 20818,
+      "sha256": "62e2307434dcfa3c826b7672781329f20dbb795c808d3cb8af647f347fcbd347",
       "policy": "official"
     },
     {
@@ -169,8 +181,8 @@
     },
     {
       "path": "scripts/release_manifest.py",
-      "size": 4921,
-      "sha256": "d20d3b7619e93972f29e25b77c33f477450dbbc4efd381224078ac890627832d",
+      "size": 5166,
+      "sha256": "2f7dce2578ac61017da13200ecc5290545f2284088d2bc7b3c4a5f24f5340746",
       "policy": "official"
     },
     {
@@ -193,14 +205,14 @@
     },
     {
       "path": "scripts/semantics_config.py",
-      "size": 13095,
-      "sha256": "2f09fe5b2f41c53bee10616e07837add9b4a004272d3ac4b3f4a18cd74a7bed6",
+      "size": 14669,
+      "sha256": "3939b59a967e5eb8c7f06c0656aff72c9a4af92a66b241fbed33114c81868a54",
       "policy": "official"
     },
     {
       "path": "scripts/storyboard.py",
-      "size": 11113,
-      "sha256": "f9c1d041976ad91b51c4d0a0c5915488c1f38b048a7205f0199e6fb71c2e5987",
+      "size": 11872,
+      "sha256": "3e33fd18ce9ef130dec1b574420dfbd5b4feeaa359c065bf66f78ba2a5e674df",
       "policy": "official"
     },
     {
@@ -306,6 +318,12 @@
       "policy": "official"
     },
     {
+      "path": "tests/test_material_ranking.py",
+      "size": 8831,
+      "sha256": "39081965a8ac395db050f289ba662eaae96e608e69daee6ad66723ac33c6e475",
+      "policy": "official"
+    },
+    {
       "path": "tests/test_materials_guard.py",
       "size": 7854,
       "sha256": "a63bd4afdded6a906d88ea42382d3953a3642446ffb7d8413ba3055a01067649",
@@ -313,8 +331,8 @@
     },
     {
       "path": "tests/test_media_orientation.py",
-      "size": 3860,
-      "sha256": "b8b9beb493f401b43022b3e11e168725f62bf1dac785770297ff550991ba364d",
+      "size": 5343,
+      "sha256": "3d9ec6887cc64f39c7be63653249209f5b249d6c0889aa4ad0c1ec9ee0cc5aef",
       "policy": "official"
     },
     {
@@ -379,8 +397,8 @@
     },
     {
       "path": "tests/verify_draft.py",
-      "size": 15738,
-      "sha256": "c254df9b76ba556ce89de18d01cec9a00fa559560bcda33b068e602a02533637",
+      "size": 16905,
+      "sha256": "13c9b11e01c7a09ea9bb4b32efffd1ae3fc0c257c7483d4c9f6b41507d4e6a65",
       "policy": "official"
     },
     {
@@ -415,8 +433,8 @@
     },
     {
       "path": "workbench/workbench_gui.py",
-      "size": 79327,
-      "sha256": "ef4d99763d454c2c8bb4c27d2f06bb2ebb8b094905e061e746f81a1643ce1bcf",
+      "size": 80934,
+      "sha256": "ac4598d31d1ecfc11aa5b6511b3ece1ddee3433aaa4f81732185db6fd9694e8e",
       "policy": "official"
     },
     {
@@ -445,8 +463,8 @@
     },
     {
       "path": "语义规则分配表.xlsx",
-      "size": 18555,
-      "sha256": "2db0ba6f0543a6ddb40449aa7a7a0972e5603683eb3d064828452d2f6d24163a",
+      "size": 19976,
+      "sha256": "f2baffb1d2ef44f27631400521bc725e02f8c2af6fdd277ba207bcf0f0bbb764",
       "policy": "official"
     }
   ],

@@ -29,7 +29,10 @@ EXCLUDE_TOP = ('output', 'state')
 #   ② install_p05.py 当 PROTECTED_FILES 保留（不覆盖用户的基准）
 # 于是升级装完跑清单校验 → "文件校验失败：config/materials_baseline.json"
 # → 自检不通过 → **自动回滚**。任何设过素材库基准的同事升级 P05 都会失败。
-PROTECTED_LOCAL = ('config/gui_settings.json', 'config/materials_baseline.json')
+PROTECTED_LOCAL = ('config/gui_settings.json', 'config/materials_baseline.json',
+                   # 2026-11-25：剪映版本实测记录是**本机资产**（谁出片谁写），
+                   # 收进清单必然哈希对不上 —— 每次出片都会更新它。
+                   'config/editor_versions.json')
 
 
 def sha256_file(path):

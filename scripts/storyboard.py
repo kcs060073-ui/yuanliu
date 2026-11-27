@@ -43,39 +43,21 @@ def _orientation(value):
                 (value or '').strip().lower())
 
 
-def _candidate_score(item, need_us, bucket_rank, orientation, usage, prev_path=''):
-    reasons = []
-    score = 100 - bucket_rank * 12
-    if bucket_rank == 0:
-        reasons.append('语义首选桶')
-    else:
-        reasons.append('语义回退%d级' % bucket_rank)
-    dur = item.get('duration') or 0
-    if item.get('kind') == 'image':
-        score -= 8
-        reasons.append('图片素材')
-    elif dur and need_us:
-        ratio = dur / float(need_us)
-        if 0.5 <= ratio <= 2.0:
-            score += 12; reasons.append('时长适配')
-        elif ratio < 0.5:
-            score -= 25; reasons.append('时长偏短')
-        else:
-            score += 4; reasons.append('可安全截取')
-    if orientation and item.get('orientation') == orientation:
-        score += 8; reasons.append('方向一致')
-    elif orientation and item.get('orientation') not in (None, orientation):
-        score -= 18; reasons.append('方向回退')
+def _candidate_score(item, need_us, bucket_rank, orientation, usage,
+                     prev_path='', text='', hint_floor=False):
+    """候选打分 —— 直接复用 material_matcher.score_item（单一实现）。
+
+    2026-11-27：以前这里单独一份打分，生产路径（match_materials）却是随机轮转，
+    于是"预览看到的"和"实际出的"是两套结果。现在两边共用同一函数。
+    hint_floor 与出片侧同义：目录补盲候选抬到首选桶同档。
+    """
     key = os.path.normpath(os.path.abspath(item['path'])).replace('\\', '/')
-    used = int((usage.get(key) or {}).get('n', 0))
-    score -= min(used, 10) * 2
-    if used == 0:
-        reasons.append('近期未使用')
-    elif used:
-        reasons.append('累计使用%d次' % used)
-    if prev_path and item['path'] == prev_path:
-        score -= 30; reasons.append('与前镜头重复')
-    return max(0, min(100, int(round(score)))), reasons
+    n_used = int((usage.get(key) or {}).get('n', 0))
+    prev = {'path': prev_path} if prev_path else None
+    score, reasons = mm.score_item(item, text, bucket_rank, need_us,
+                                   prev_item=prev, orientation=orientation,
+                                   used_count=n_used, hint_floor=hint_floor)
+    return int(round(score)), reasons
 
 
 def create_plan(script, materials_dir, style='3', park='', orientation='', candidate_count=3):
@@ -106,6 +88,7 @@ def create_plan(script, materials_dir, style='3', park='', orientation='', candi
         by_bucket.setdefault(item.get('bucket'), []).append(item)
 
     scenes, prev = [], ''
+    used_paths = set()      # 同一条成片内不复用（与生产路径 match_materials 一致）
     for no, block in enumerate(mm.split_semantic_blocks(subtitles), 1):
         idxs = block['idxs']
         text = ''.join(subtitles[i].get('text', '') for i in idxs)
@@ -115,13 +98,30 @@ def create_plan(script, materials_dir, style='3', park='', orientation='', candi
                    else mm.support_buckets(text) if btype == 'support'
                    else mm.BLOCK_BUCKETS.get(btype, ['factory']))
         ranked = []
+        seen_paths = set()
         for rank, bucket in enumerate(buckets):
             for item in by_bucket.get(bucket, []):
-                score, reasons = _candidate_score(item, need_us, rank, orient, usage, prev)
+                if item['path'] in seen_paths:
+                    continue
+                seen_paths.add(item['path'])
+                score, reasons = _candidate_score(item, need_us, rank, orient, usage,
+                                                  prev, text)
                 ranked.append((score, item, reasons))
+        # 目录提示：把「厂牌 / 卷帘门 / 地铁站」这类桶外素材也放进来（与出片一致）。
+        # 开场块不启用 —— 否则「产业园→厂牌」会把航拍/门口整体挤掉。
+        if btype != 'opening':
+            for item in items:
+                if item['path'] in seen_paths:
+                    continue
+                if mm.hint_bonus(text, item)[0]:
+                    seen_paths.add(item['path'])
+                    score, reasons = _candidate_score(item, need_us, 90, orient, usage,
+                                                      prev, text, hint_floor=True)
+                    ranked.append((score, item, reasons))
         if not ranked:
             for item in by_bucket.get(None, []):
-                score, reasons = _candidate_score(item, need_us, len(buckets), orient, usage, prev)
+                score, reasons = _candidate_score(item, need_us, len(buckets), orient,
+                                                  usage, prev, text)
                 reasons.insert(0, '未分类兜底')
                 ranked.append((score, item, reasons))
         if not ranked:
@@ -129,10 +129,13 @@ def create_plan(script, materials_dir, style='3', park='', orientation='', candi
             # 不能在预览界面悄悄留下空镜头。
             for item in items:
                 score, reasons = _candidate_score(item, need_us, len(buckets) + 1,
-                                                   orient, usage, prev)
+                                                   orient, usage, prev, text)
                 reasons.insert(0, '全库兜底·需人工确认')
                 ranked.append((score, item, reasons))
         ranked.sort(key=lambda x: (-x[0], x[1]['path'].lower()))
+        fresh = [r for r in ranked if r[1]['path'] not in used_paths]
+        if fresh:
+            ranked = fresh
         candidates = []
         seen = set()
         for score, item, reasons in ranked:
@@ -152,6 +155,7 @@ def create_plan(script, materials_dir, style='3', park='', orientation='', candi
         selected = candidates[0]['asset_id'] if candidates else ''
         if candidates:
             prev = candidates[0]['path']
+            used_paths.add(prev)
         scenes.append({
             'scene_no': no, 'subtitle_indexes': idxs, 'text': text,
             'type': btype, 'need_us': need_us, 'selected_asset_id': selected,

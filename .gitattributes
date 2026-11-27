@@ -1,0 +1,10 @@
+# Keep release-manifest files byte-for-byte across checkouts.
+/PROJECT_STATUS.md -text
+/SKILL.md -text
+/release_manifest.json -text
+/*.xlsx -text
+/config/** -text
+/scripts/** -text
+/templates/** -text
+/tests/** -text
+/workbench/** -text
